@@ -23,15 +23,45 @@ firebase.initializeApp({
   appId: "1:989551998487:web:a82fcb408a87c761dd0e52",
 });
 
+// this must be passed into useAuthState hook to get the user info
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
+// if user is loggedin, it returns user id, email and other info
+const [user] = useAuthState(auth);
+
+// App Component
 function App() {
   return (
     <div className="App">
       <header className="App-header"></header>
+      {/* if user -> show chatroom, else show signin */}
+      <section>{user ? <ChatRoom /> : <SignIn />}</section>
     </div>
   );
 }
+
+// SignIn Component
+function SignIn() {
+  const signInWithGoogle = () => {
+    // signin with google
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider);
+  };
+  return <button onClick={signInWithGoogle}>SignIn With Google</button>;
+}
+
+// Signout Component
+function Signout = () => {
+
+  // check if the user is logged in using .currentuser and then display the logout btn if current user exists
+  return auth.currentUser && (
+    <button onClick = {()=>auth.signOut()}>Sign out</button>
+  )
+}
+ 
+
+// ChatRoom Component
+function ChatRoom() {}
 
 export default App;
