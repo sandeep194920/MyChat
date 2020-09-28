@@ -33,7 +33,11 @@ function App() {
   const [user] = useAuthState(auth);
   return (
     <div className="App">
-      <header className="App-header"></header>
+      <header className="App-header">
+        <h2>My Chat</h2>
+        <Signout />
+      </header>
+
       {/* if user -> show chatroom, else show signin */}
       <section>{user ? <ChatRoom /> : <SignIn />}</section>
     </div>
@@ -54,7 +58,20 @@ function SignIn() {
 function Signout() {
   // check if the user is logged in using .currentuser and then display the logout btn if current user exists
   return (
-    auth.currentUser && <button onClick={() => auth.signOut()}>Sign out</button>
+    auth.currentUser && (
+      <button
+        style={{
+          background: "#eba834",
+          borderRadius: "20px",
+          color: "black",
+          fontSize: "15px",
+          fontWeight: "bold",
+        }}
+        onClick={() => auth.signOut()}
+      >
+        Logout
+      </button>
+    )
   );
 }
 
@@ -74,6 +91,10 @@ function ChatRoom() {
   // when user types a message and submits, this triggers. It is declared as async function as we are using await inside
   const sendMessage = async (e) => {
     e.preventDefault(); // prevents page refresh after sending message
+    // checks if the message is typed or not
+    if (formValue.length < 1) {
+      return;
+    }
     const { uid, photoURL } = auth.currentUser; // since we logged in with google, we already have access to photoURL
 
     // creating a new document of messages in firebase. await removes the need of using then keyword
@@ -100,6 +121,7 @@ function ChatRoom() {
       {/* form for the user to send the message */}
       <form onSubmit={sendMessage}>
         <input
+          placeholder="Say something nice"
           type="text"
           value={formValue}
           onChange={(e) => setFormValue(e.target.value)}
@@ -107,7 +129,9 @@ function ChatRoom() {
         {/* Use any of them as send btn -  🤳🏹🪁 */}
         <button type="submit">
           {/* to use emoji we need to enclose with span with a role and aria-label to avoid the warning message */}
-          <span role="img">🏹</span>
+          <span role="img" aria-label="emoji">
+            🏹
+          </span>
         </button>
       </form>
     </>
@@ -123,7 +147,7 @@ function ChatRoom() {
     return (
       <>
         <div className={`message ${messageClass}`}>
-          <img src={photoURL} />
+          <img src={photoURL} alt="img" />
           <p>{text}</p>
         </div>
       </>
