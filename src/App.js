@@ -27,11 +27,10 @@ firebase.initializeApp({
 const auth = firebase.auth();
 const firestore = firebase.firestore();
 
-// if user is loggedin, it returns user id, email and other info
-const [user] = useAuthState(auth);
-
 // App Component
 function App() {
+  // if user is loggedin, it returns user id, email and other info
+  const [user] = useAuthState(auth);
   return (
     <div className="App">
       <header className="App-header"></header>
@@ -52,16 +51,38 @@ function SignIn() {
 }
 
 // Signout Component
-function Signout = () => {
-
+function Signout() {
   // check if the user is logged in using .currentuser and then display the logout btn if current user exists
-  return auth.currentUser && (
-    <button onClick = {()=>auth.signOut()}>Sign out</button>
-  )
+  return (
+    auth.currentUser && <button onClick={() => auth.signOut()}>Sign out</button>
+  );
 }
- 
 
 // ChatRoom Component
-function ChatRoom() {}
+function ChatRoom() {
+  // in firebase we create a 'messages' collection
+  const messagesRef = firestore.collection("messages");
+  // we need to order these messages by timeStamp and limit it to maximum of 50
+  const query = messagesRef.orderBy("createdAt").limit(50);
+  // we can now listen to any updated to the 'messages' collection in real time using the hook useCollectionData. idField is an optional param which tells what should be the id and here we have 'id' itself as id where each message will have it
+  const [messages] = useCollectionData(query, { idField: "id" });
+  return (
+    <>
+      <div>
+        {messages &&
+          messages.map((message) => (
+            <ChatMessage key={message.id} message={message} />
+          ))}
+      </div>
+      <div></div>
+    </>
+  );
+
+  // ChatMessage Component
+  function ChatMessage(props) {
+    const { text, uid } = props.message;
+    return <p>{text}</p>;
+  }
+}
 
 export default App;
