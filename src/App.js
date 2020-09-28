@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import "./App.css";
 
 //firebase imports  --> for this to work, npm install firebase react-firebase-hooks
@@ -66,22 +66,68 @@ function ChatRoom() {
   const query = messagesRef.orderBy("createdAt").limit(50);
   // we can now listen to any updated to the 'messages' collection in real time using the hook useCollectionData. idField is an optional param which tells what should be the id and here we have 'id' itself as id where each message will have it
   const [messages] = useCollectionData(query, { idField: "id" });
+  // used in chatMessage comp to send the message
+  const [formValue, setFormValue] = useState("");
+  // useRef is used which is referenced in the SendMessage comp inside div to scroll to the end of the message after sending it every time
+  const dummy = useRef();
+
+  // when user types a message and submits, this triggers. It is declared as async function as we are using await inside
+  const sendMessage = async (e) => {
+    e.preventDefault(); // prevents page refresh after sending message
+    const { uid, photoURL } = auth.currentUser; // since we logged in with google, we already have access to photoURL
+
+    // creating a new document of messages in firebase. await removes the need of using then keyword
+    await messagesRef.add({
+      text: formValue,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uid, // this is similar to writing uid:uid. Since both are same, we can cut short to uid. Same applies for photoURL
+      photoURL,
+    });
+    setFormValue("");
+    dummy.current.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <>
-      <div>
+      <main>
         {messages &&
           messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
-      </div>
-      <div></div>
+        {/* this div helps us to autoscroll to the bottom after each message when used with useRef */}
+        <div ref={dummy}></div>
+      </main>
+      {/* form for the user to send the message */}
+      <form onSubmit={sendMessage}>
+        <input
+          type="text"
+          value={formValue}
+          onChange={(e) => setFormValue(e.target.value)}
+        />
+        {/* Use any of them as send btn -  🤳🏹🪁 */}
+        <button type="submit">
+          {/* to use emoji we need to enclose with span with a role and aria-label to avoid the warning message */}
+          <span role="img">🏹</span>
+        </button>
+      </form>
     </>
   );
 
   // ChatMessage Component
   function ChatMessage(props) {
-    const { text, uid } = props.message;
-    return <p>{text}</p>;
+    const { text, uid, photoURL } = props.message;
+    // Our chat should appear on right side and others' chats should appear on left. This is done by comparing uid and apply css accordingly
+
+    const messageClass = uid === auth.currentUser.uid ? "sent" : "received"; // if the uid contained in the message object in firestore is equal to the current user id then it means we have sent the message
+
+    return (
+      <>
+        <div className={`message ${messageClass}`}>
+          <img src={photoURL} />
+          <p>{text}</p>
+        </div>
+      </>
+    );
   }
 }
 
